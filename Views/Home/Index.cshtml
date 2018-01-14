@@ -1,0 +1,29 @@
+﻿@model PeerReviewWeb.Models.HomeViewModels.IndexViewModel
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container" style="padding-top: 20px">
+    @if (Model.ActiveCourses.Count != 0) {
+        @foreach (Course c in Model.ActiveCourses) {
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">@c.Name</h3>
+                </div>
+                <div class="panel-body">
+                    @c.Description
+                </div>
+                <environment include="Development">
+                    <div class="panel-footer">Course GUID: @c.ID</div>
+                </environment>
+            </div>
+        }
+    } else {
+        <div class="alert alert-danger" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Error:</span>
+            You are not enrolled in any courses. Please ask an instructor to enrol you.
+        </div>
+    }
+</div>

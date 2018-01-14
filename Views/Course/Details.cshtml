@@ -1,0 +1,53 @@
+@model PeerReviewWeb.Models.CourseModels.Course
+
+@using PeerReviewWeb.Models.JoinTagModels
+
+@{
+    var instructors = String.Join(",", Model.GetInstructors());
+    var students = String.Join(",", Model.GetStudents());
+}
+
+<h3>@Model.Name</h3>
+
+<label>Owner</label> @Model.OwnerEmail
+
+<hr />
+
+<label>Description</label>
+<p>@Model.Description</p>
+
+<h4>Assignments</h4>
+<ul class="list-group">
+    @foreach (Assignment asg in Model.Assignments.OrderBy(a => a.Seq)) {
+        <li class="list-group-item">
+            <b>@asg.Seq</b>
+            @asg.Name
+            @if (@asg.IsOpen()) {
+                <b style="color: green">Open</b>
+            } else {
+                <b style="color: red">Closed</b>
+            }
+        </li>
+    }
+    <li class="list-group-item">
+    <a asp-controller="Assignment" asp-action="Create" asp-route-forCourse="@Model.ID">
+        <i class="glyphicon glyphicon-plus"></i> Add Assignment
+    </a>
+    </li>
+</ul>
+
+<h4>Instructors</h4>
+<p>
+    @instructors
+</p>
+
+<h4>Students</h4>
+<p>
+    @students
+</p>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.ID">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
+

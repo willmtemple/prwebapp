@@ -1,0 +1,46 @@
+@model PeerReviewWeb.Models.CourseModels.Course
+
+@using PeerReviewWeb.Models.JoinTagModels
+
+@{
+    var instructors = String.Join(",", Model.GetInstructors());
+    var students = String.Join(",", Model.GetStudents());
+}
+
+<h3>Editing @Model.Name</h3>
+<hr />
+
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="ID" />
+    <div class="form-group row">
+        <label asp-for="Name" class="col-sm-2 col-form-label col-form-label-lg"></label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control form-control-lg" asp-for="Name" placeholder="Enter a course name..." />
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="Description"></label>
+        <textarea class="form-control" asp-for="Description" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="form-group">
+        <label asp-for="OwnerEmail"></label>
+        <input type="email" class="form-control" asp-for="OwnerEmail" placeholder="Email address" value="@ViewData["EmailPrefill"]" />
+        <small class="form-text text-muted">You may assign the course to another email address.</small>
+    </div>
+    <div class="form-group">
+        <label for="newInstructors">Instructors</label>
+        <textarea class="form-control" id="newInstructors" name="newInstructors" placeholder="Instructors">@instructors</textarea>
+        <small class="form-text text-muted">Enter comma-separated email addresses.</small>
+    </div>
+    <div class="form-group">
+        <label for="newStudents">Students</label>
+        <textarea class="form-control" id="newStudents" name="newStudents" placeholder="Students">@students</textarea>
+        <small class="form-text text-muted">Enter comma-separated email addresses.</small>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

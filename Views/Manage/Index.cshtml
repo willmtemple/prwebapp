@@ -1,0 +1,14 @@
+﻿@model PeerReviewWeb.Models.ManageViewModels.IndexViewModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<h4>@ViewData["Title"]</h4>
+@Html.Partial("_StatusMessage", Model.StatusMessage)
+<div class="container">
+    <label>Email:</label> @Model.Email
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
