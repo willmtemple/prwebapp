@@ -1,0 +1,6 @@
+﻿@using PeerReviewWeb.Models.CourseModels
+@model Assignment
+
+<a asp-controller="Assignment" asp-action="Details" asp-route-id="@Model.ID">
+    @Model.Name
+</a>

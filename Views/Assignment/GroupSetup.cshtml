@@ -1,0 +1,54 @@
+@using PeerReviewWeb.Models.CourseModels
+@using PeerReviewWeb.Models.JoinTagModels
+@using PeerReviewWeb.Models.AssignmentViewModels
+@model GroupSetupViewModel
+
+@{
+	ViewData["Title"] = "Group Info";
+}
+
+<h1>Group Information</h1>
+
+<label>Assignment</label> @Model.Assignment.Name
+
+@if (!Model.Assignment.IsGroupAssignment) {
+	<p><b>Groups are not required for this assignment.</b></p>
+	<a asp-action="StudentDetails" asp-route-id="@Model.Assignment.ID">Click here to return to the assignment details.</a>
+} else {
+	if (Model.Group == null) {
+		<p><b>You are not a member of any group, but groups are required for this assignment.</b></p>
+		<p>
+			Use the form below to create a new group and invite another student to it.
+			Groups for this assignment require <b>at least @Model.Assignment.MinGroupSize
+			members</b> and <b>no more than @Model.Assignment.MaxGroupSize</b>.
+		</p>
+		<form asp-action="InviteToGroup">
+			<input type="hidden" value="@Model.Assignment.ID" name="forAssignment" />
+			<div class="form-group">
+					<label for="userEmail">Email address</label>
+					<input type="text" class="form-control" id="userEmail" name="userEmail" />
+			</div>
+			<button type="submit" class="btn btn-primary">Create and Invite</button>
+		</form>
+
+	} else {
+		<hr />
+		<p><b>Current Members</b>@Model.Group.GetFormattedMemberList()</p>
+		<hr />
+
+		@if (Model.Group.Members.Count < Model.Assignment.MinGroupSize) {
+			<p><b>This group does not have enough members... @Model.Assignment.MinGroupSize are required.</b></p>
+		}
+
+		@if (Model.Group.Members.Count < Model.Assignment.MaxGroupSize) {
+			<form asp-action="InviteToGroup">
+				<input type="hidden" value="@Model.Assignment.ID" name="forAssignment" />
+				<div class="form-group">
+					<label for="userEmail">Email address</label>
+					<input type="text" class="form-control" id="userEmail" name="userEmail" />
+				</div>
+				<button type="submit" class="btn btn-primary">Invite</button>
+			</form>
+		}
+	}
+}

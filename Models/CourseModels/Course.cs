@@ -28,7 +28,7 @@ namespace PeerReviewWeb.Models.CourseModels
         // Returns -1 on failure, or the role of the user.
         public int RoleFor(ApplicationUser user) {
             if (user == null) return -1;
-            var tag = Affiliates.Where(a => a.ApplicationUserId == user.Id).First();
+            var tag = Affiliates.Where(a => a.ApplicationUserId == user.Id).FirstOrDefault();
 
             if (tag == null) return -1;
 

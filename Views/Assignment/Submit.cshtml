@@ -1,0 +1,23 @@
+@using PeerReviewWeb.Models.CourseModels
+@model Submission
+
+<h3>New Submission</h3>
+
+@if (ViewData["Error"] != null) {
+    <div class="alert alert-danger" role="alert">
+        <strong>Validation Error:</strong> @ViewData["Error"]
+	</div>
+	<div class="alert alert-warning">
+		<strong>Make sure to re-attach your files, as they were lost due to the previous error.</strong>
+	</div>
+}
+<form asp-action="Submit" asp-route-stage="@ViewData["StageID"]" asp-route-id="@ViewData["AssignmentID"]" enctype="multipart/form-data">
+	<div class="form-group">
+		<label asp-for="SubmissionText">Submission</label>
+		<textarea rows="10" class="form-control" asp-for="SubmissionText" placeholder="Say something about your submission."></textarea>
+	</div>
+	<label for="uploadFiles">Attach Files</label>
+	<input type="file" name="uploadFiles" id="uploadFiles"  multiple />
+	<hr />
+	<button type="submit" class="btn btn-primary">Submit</button>
+</form>

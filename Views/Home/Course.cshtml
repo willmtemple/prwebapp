@@ -1,0 +1,36 @@
+﻿@using PeerReviewWeb.Models.CourseModels
+@using PeerReviewWeb.Models.JoinTagModels
+@model Course
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">@Model.Name</h3>
+    </div>
+    <div class="panel-body">
+        <p>
+            @Model.Description
+        </p>
+        <b>Assignments</b>
+        <ul>
+            @foreach (Assignment a in Model.Assignments.OrderBy(a => a.Seq).Where(a => a.IsOpen())) {
+                <li>@await Html.PartialAsync("Assignment.cshtml", a)</li>
+            }
+        </ul>
+        <a asp-controller="Assignment" asp-action="ForCourse" asp-route-id="@Model.ID">
+            View All Assignments
+        </a>
+        @if (Model.RoleFor(await UserManager.GetUserAsync(User)) == CourseJoinTag.ROLE_INSTRUCTOR)
+        {
+            <hr />
+            <p><b>Instructor Features: </b> Use the buttons below to change course configuration.</p>
+            <a class="btn" asp-controller="Course" asp-action="Details" asp-route-id="@Model.ID">Course Details</a>
+
+        }
+    </div>
+    <environment include="Development">
+        <div class="panel-footer">Course GUID: @Model.ID</div>
+    </environment>
+</div>

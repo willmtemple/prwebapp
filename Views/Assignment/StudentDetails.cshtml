@@ -1,0 +1,28 @@
+@using PeerReviewWeb.Models.AssignmentViewModels
+@model StudentDetailsViewModel
+
+@{
+	ViewData["Title"] = Model.Assignment.Name;
+}
+
+<div class="container">
+	<h2>@Model.Assignment.Name</h2>
+	<p><b>Course: </b>@Model.Assignment.Course.Name</p>
+	@if (Model.Group != null) {
+		<p><b>Team: </b> @Model.Group.GetFormattedMemberList()</p>
+	}
+	<hr \>
+	<h3>Description</h3>
+	<p>@Model.Assignment.Description</p>
+	@if (Model.Stage == null) {
+		<p><b>This assignment is complete.</b></p>
+	} else {
+		@await Html.PartialAsync("_Stage.cshtml", Model.Stage)
+	}
+	@if (Model.Submissions.Count > 0) {
+		<h3>Submission History</h3>
+		@foreach (Submission s in Model.Submissions) {
+			@await Html.PartialAsync("_Submission", s)
+		}
+	}
+</div>

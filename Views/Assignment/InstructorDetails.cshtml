@@ -1,0 +1,29 @@
+@using PeerReviewWeb.Models.AssignmentViewModels
+@model InstructorDetailsViewModel
+
+@{
+	ViewData["Title"] = Model.Assignment.Name;
+}
+
+<div class="container">
+	<h2>@Model.Assignment.Name</h2>
+	<p><b>Course: </b>@Model.Assignment.Course.Name</p>
+	<hr \>
+	<h3>Instructions</h3>
+	<p>@Model.Assignment.Description</p>
+
+	<h3>Stages</h3>
+	<ul class="list-group">
+    	@foreach (AssignmentStage s in Model.Assignment.Stages.OrderBy(s => s.Seq)) {
+        	<li class="list-group-item">
+            	<b>@s.Seq</b>
+            	@s.Id
+        	</li>
+    	}
+    	<li class="list-group-item">
+    		<a asp-controller="Assignment" asp-action="CreateStage" asp-route-forAssignment="@Model.Assignment.ID">
+        		<i class="glyphicon glyphicon-plus"></i> Add Stage
+    		</a>
+    	</li>
+	</ul>
+</div>

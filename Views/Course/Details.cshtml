@@ -21,7 +21,9 @@
     @foreach (Assignment asg in Model.Assignments.OrderBy(a => a.Seq)) {
         <li class="list-group-item">
             <b>@asg.Seq</b>
-            @asg.Name
+            <a asp-controller="Assignment" asp-action="InstructorDetails" asp-route-id="@asg.ID">
+                @asg.Name
+            </a>
             @if (@asg.IsOpen()) {
                 <b style="color: green">Open</b>
             } else {

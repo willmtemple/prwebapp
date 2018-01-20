@@ -13,53 +13,88 @@ using PeerReviewWeb.Data;
 using PeerReviewWeb.Models;
 using PeerReviewWeb.Models.CourseModels;
 using PeerReviewWeb.Models.HomeViewModels;
+using PeerReviewWeb.Models.FormSchema;
 using PeerReviewWeb.Services;
 
 namespace PeerReviewWeb.Controllers
 {
-    [Authorize]
-    public class HomeController : Controller
-    {
+	[Authorize]
+	public class HomeController : Controller
+	{
 
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IEmailSender _emailSender;
-        private readonly ILogger _logger;
-        private readonly ApplicationDbContext _context;
+		private readonly UserManager<ApplicationUser> _userManager;
+		private readonly SignInManager<ApplicationUser> _signInManager;
+		private readonly IEmailSender _emailSender;
+		private readonly ILogger _logger;
+		private readonly ApplicationDbContext _context;
 
-        public HomeController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            IEmailSender emailSender,
-            ILogger<AccountController> logger,
-            ApplicationDbContext context)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _emailSender = emailSender;
-            _logger = logger;
-            _context = context;
-        }
-        public async Task<IActionResult> Index()
-        {
-            var user = await _userManager.GetUserAsync(User);
+		public HomeController(
+			UserManager<ApplicationUser> userManager,
+			SignInManager<ApplicationUser> signInManager,
+			IEmailSender emailSender,
+			ILogger<AccountController> logger,
+			ApplicationDbContext context)
+		{
+			_userManager = userManager;
+			_signInManager = signInManager;
+			_emailSender = emailSender;
+			_logger = logger;
+			_context = context;
+		}
+		public async Task<IActionResult> Index()
+		{
+			var user = await _userManager.GetUserAsync(User);
 
-            _context.Entry(user).Collection(u => u.Courses).Load();
+			_context.Entry(user).Collection(u => u.Courses).Load();
 
-            List<Course> courses = user.Courses?.Select(cjt => {
-                _context.Entry(cjt).Reference(cjt_i => cjt_i.Course).Load();
-                return cjt.Course;
-            }).ToList() ?? new List<Course>();
+			IList<GroupInvitation> invites = await _context.GroupInvitations
+				.Include(gi => gi.Group)
+					.ThenInclude(g => g.Members)
+						.ThenInclude(gjt => gjt.ApplicationUser)
+				.Where(gi => gi.ApplicationUser == user)
+				.ToListAsync();
 
-            var model = new IndexViewModel {
-                ActiveCourses = courses
-            };
-            return View(model);
-        }
+			List<Notification> notifications = invites.Select(gi => new Notification
+			{
+				Message = $"You've been invited to join a group with {gi.Group.GetFormattedMemberList()}.",
+				Controller = "Assignment",
+				Action = "JoinGroup",
+				RouteId = gi.ID.ToString(),
+			}).ToList();
 
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-    }
+			List<Course> courses = user.Courses?.Select(cjt =>
+			{
+				_context.Entry(cjt).Reference(cjt_i => cjt_i.Course).Load();
+				_context.Entry(cjt.Course).Collection(c => c.Assignments).Load();
+				return cjt.Course;
+			}).ToList() ?? new List<Course>();
+
+			var model = new IndexViewModel
+			{
+				Notifications = notifications,
+				ActiveCourses = courses,
+			};
+			return View(model);
+		}
+
+		public IActionResult DemoSchema()
+		{
+			var entries = new List<AbsFormEntry>();
+			entries.Add(new LikertForm("q1", "The submission is clear.", 5));
+			entries.Add(new TextForm("q1-exp", "Yes, and...", 3));
+			var model = new Schema
+			{
+				Title = "Demo Form",
+				Instructions = "Answer the following questions regarding the material from class.",
+				Entries = entries,
+			};
+
+			return View(model);
+		}
+
+		public IActionResult Error()
+		{
+			return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+		}
+	}
 }

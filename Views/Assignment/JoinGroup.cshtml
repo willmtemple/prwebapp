@@ -1,0 +1,17 @@
+@model PeerReviewWeb.Models.CourseModels.GroupInvitation
+
+@{
+	ViewData["Title"] = "Join Group";
+}
+
+<h3>Group Invitation</h3>
+
+<p>You've been invited to join the following group:</p>
+
+<p><label>Course</label> @Model.Group.Assignment.Course.Name</p>
+<p><label>Assignment</label> @Model.Group.Assignment.Name</p>
+<p><label>Current Members</label> @Model.Group.GetFormattedMemberList()</p>
+
+<form asp-route-id="@Model.ID">
+	<button class="btn btn-primary" type="submit">Accept Invitation</button>
+</form>

@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Composition" Version="1.0.31" ExcludeAssets="All"/>
     <PackageReference Include="System.Composition" Version="1.1.0"/>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.1-beta3"/>
+    <PackageReference Include="Microsoft.AspNetCore.HttpOverrides" Version="2.0.1"/>
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="2.0.1"/>

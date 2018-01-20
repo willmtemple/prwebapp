@@ -1,0 +1,8 @@
+@using PeerReviewWeb.Models.FormSchema
+@model Schema
+
+<h3>@Model.Title</h3>
+<p>@Model.Instructions</p>
+@foreach (AbsFormEntry e in Model.Entries) {
+    @await Html.PartialAsync($"~/Views/Schema/{e.Type}.cshtml", e)
+}

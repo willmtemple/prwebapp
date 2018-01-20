@@ -1,0 +1,22 @@
+@using PeerReviewWeb.Models.ReviewViewModels
+@model ReviewViewModel
+
+@{
+	ViewData["Title"] = "Review";
+}
+<div class="container row">
+	<h1>Peer Review</h1>
+	<div class="col-lg-6">
+		<h2>Submission</h2>
+		<p>Please read the following submission, as well as any attached files, then provide your commentary in the section labeled "Review."</p>
+		@await Html.PartialAsync("_Submission", Model.Submission)
+	</div>
+	<div class="col-lg-6" style="background-color: #DDDDDD; padding-bottom: 10px">
+		<h2>Review</h2>
+		<p>Condider the following questions relating to the given submission. The submission author will receive your answers as feedback.</p>
+		<form asp-action="Submit" asp-route-forSubmission="@Model.Submission.ID">
+			@await Html.PartialAsync("~/Views/Schema/Schema.cshtml", Model.ReviewSchema)
+			<button type="submit" class="btn btn-primary">Submit Review</button>
+		</form>
+	</div>
+</div>

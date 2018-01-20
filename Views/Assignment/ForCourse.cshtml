@@ -1,0 +1,9 @@
+﻿@using PeerReviewWeb.Models.CourseModels
+@model IList<Assignment>
+
+<h3>Assignments for @ViewData["CourseName"]</h3>
+<ul>
+    @foreach (Assignment a in Model) {
+        <li><a asp-action="Details" asp-route-id="@a.ID">@a.Name</a></li>
+    }
+</ul>

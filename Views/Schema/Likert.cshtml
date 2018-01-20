@@ -1,0 +1,18 @@
+@using PeerReviewWeb.Models.FormSchema
+@model LikertForm
+
+<label for="@Model.Id">@Model.Prompt</label>
+<ul class="likert">
+    @for (uint i = 1; i <= @Model.Scale; i++) {
+        <li>
+            <input type="radio" name="@Model.Id" value="@i">
+            @if (i == 1) {
+                <label>@Model.MinLabel</label>
+            } else if (i == @Model.Scale) {
+                <label>@Model.MaxLabel</label>
+            } else {
+                <label></label>
+            }
+        </li>
+    }
+</ul>

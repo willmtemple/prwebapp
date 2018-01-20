@@ -1,0 +1,7 @@
+@using PeerReviewWeb.Models.FormSchema
+@model TextForm
+
+<div class="form-group">
+    <label for="@Model.Id">@Model.Prompt</label>
+    <textarea class="form-control" rows="@Model.Height" id="@Model.Id" name="@Model.Id"></textarea>
+</div>

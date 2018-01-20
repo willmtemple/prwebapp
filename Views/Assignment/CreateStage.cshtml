@@ -1,0 +1,45 @@
+@model PeerReviewWeb.Models.CourseModels.AssignmentStage
+
+@{
+    ViewData["Title"] = "New Stage";
+}
+
+<div class="container">
+    @if (ViewData["Error"] != null) {
+        <div class="alert alert-danger" role="alert">
+            <strong>Validation Error:</strong> @ViewData["Error"]
+        </div>
+    }
+    <h3>Create A New Assignment Stage</h3>
+    <form asp-action="CreateStage">
+        <div class="form-group">
+            <label asp-for="Id"></label>
+            <input type="text" class="form-control form-control-lg" asp-for="Id" placeholder="stage-id" />
+            <small>Pick something short but memorable, like <i>first-draft</i>. Must be unique within this assignment.</small>
+        </div>
+        <div class="form-group">
+            <label asp-for="Instructions"></label>
+            <textarea class="form-control" asp-for="Instructions" rows="3" placeholder="Optional"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Is this assignment peer reviewed?</label>
+            @Html.RadioButtonFor(model => model.IsPeerReviewed, true) Yes
+            @Html.RadioButtonFor(model => model.IsPeerReviewed, false, new { Checked = "checked" }) No
+        </div>
+        <div class="form-group">
+            <label asp-for="ReviewsPerStudent">Number of mandatory reviews per student</label>
+            <input type="number" asp-for="ReviewsPerStudent" value="0" />
+        </div>
+        <div class="form-group">
+            <label asp-for="ReviewSchemaJSON"></label>
+            <textarea class="form-control mono" asp-for="ReviewSchemaJSON" rows="20" placeholder="{}"></textarea>
+            <small>Enter a JSON schema. Get an example <a asp-controller="Home" asp-action="DemoSchema">here.</a></small>
+        </div>
+        <div class="form-group">
+            <label for="forAssignment">Assignment ID</label>
+            <input type="text" class="form-control" id="forAssignment" name="forAssignment" value="@ViewData["forAssignment"]" />
+            <small>For your own good, don't modify this.</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
