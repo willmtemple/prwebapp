@@ -1,0 +1,11 @@
+@using PeerReviewWeb.Models.FormSchema
+@model TextForm
+
+@{
+    var contents = ((Dictionary<string,object>)ViewData["Values"])[Model.Id];
+}
+
+<div class="form-group">
+    <label for="@Model.Id">@Model.Prompt</label>
+    <textarea class="form-control" rows="@Model.Height" id="@Model.Id" name="@Model.Id" disabled>@contents</textarea>
+</div>

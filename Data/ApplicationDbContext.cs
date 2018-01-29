@@ -24,6 +24,7 @@ namespace PeerReviewWeb.Data
 		public virtual DbSet<StageHolder> StageHolders { get; set; }
 		public virtual DbSet<FileRef> FileRefs { get; set; }
 		public virtual DbSet<Review> Reviews { get; set; }
+		public virtual DbSet<ReviewAssignment> ReviewAssignments { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{

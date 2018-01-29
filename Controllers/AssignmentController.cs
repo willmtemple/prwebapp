@@ -14,9 +14,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using PeerReviewWeb.Data;
 using PeerReviewWeb.Models;
+using PeerReviewWeb.Models.FormSchema;
 using PeerReviewWeb.Models.CourseModels;
 using PeerReviewWeb.Models.JoinTagModels;
 using PeerReviewWeb.Models.AssignmentViewModels;
+using Newtonsoft.Json;
 
 namespace PeerReviewWeb.Controllers
 {
@@ -161,22 +163,30 @@ namespace PeerReviewWeb.Controllers
 			if (asg.GroupSatisfied(user))
 			{
 				var group = asg.GroupFor(user);
+				var subs = _context.Submissions
+						.Include(s => s.AssignmentStage)
+						.ThenInclude(stage => stage.Assignment)
+						.Include(s => s.Submitter)
+						.Include(s => s.Files)
+						.OrderByDescending(s => s.AssignmentStage.Seq)
+						.Where(s =>
+							(s.Submitter.Id == user.Id && s.AssignmentStage.Assignment.ID == asg.ID)
+							|| (group != null && s.ForGroup.ID == group.ID));
+				var xsubs = subs.Select(s => new ExtendedSubmission
+				{
+					Submission = s,
+					Reviews = _context.Reviews
+						.Where(r => r.Submission.ID == s.ID)
+						.OrderBy(r => r.TimeStamp)
+						.ToList(),
+				});
 				var vm = new StudentDetailsViewModel
 				{
 					Group = group,
 					Assignment = asg,
 					// TODO: StageFprUser is disgusting
 					Stage = (group == null) ? asg.StageForUser(user, _context) : group.NextStage(),
-					Submissions = await _context.Submissions
-						.Include(s => s.AssignmentStage)
-						.ThenInclude(stage => stage.Assignment)
-						.Include(s => s.Submitter)
-						.Include(s => s.Files)
-						.OrderBy(s => s.AssignmentStage.Seq)
-						.Where(s =>
-							(s.Submitter.Id == user.Id && s.AssignmentStage.Assignment.ID == asg.ID)
-							|| s.ForGroup.ID == group.ID)
-						.ToListAsync()
+					Submissions = await xsubs.ToListAsync(),
 				};
 
 				return View(vm);
@@ -425,6 +435,22 @@ namespace PeerReviewWeb.Controllers
 					return View(stage);
 				}
 
+				if (stage.ReviewSchemaJSON != null)
+				{
+					try
+					{
+						JsonConvert.DeserializeObject<Schema>(
+							stage.ReviewSchemaJSON
+						);
+					}
+					catch (JsonReaderException ex)
+					{
+						ViewData["Error"] = $"JSON Validation error: {ex}";
+						ViewData["forAssignment"] = forAssignment;
+						return View(stage);
+					}
+				}
+
 				stage.Assignment = assignment;
 				stage.Seq = assignment.Stages.Count + 1;
 				_context.Add(stage);
@@ -472,13 +498,15 @@ namespace PeerReviewWeb.Controllers
 
 				var group = asg.GroupFor(user);
 
+				if (group != null) _context.Entry(group).Collection(g => g.Members).Load();
+
 				var presub = await _context.Submissions
 					.Include(s => s.AssignmentStage)
 					.Include(s => s.Submitter)
 					.Include(s => s.ForGroup)
 					.SingleOrDefaultAsync(s =>
 						s.AssignmentStage == astage
-						&& (s.Submitter.Id == user.Id || s.ForGroup.ID == group.ID));
+						&& (s.Submitter.Id == user.Id || (group != null && s.ForGroup.ID == group.ID)));
 
 				if (astage == null || presub != null)
 				{
@@ -516,10 +544,44 @@ namespace PeerReviewWeb.Controllers
 				sub.Files = filerefs;
 				sub.TimeStamp = DateTime.Now;
 
-				group.CurrentStage += 1;
-				_context.Update(group);
+				if (group == null)
+				{
+					var _stageHolder = await _context.StageHolders
+						.SingleOrDefaultAsync(sh =>
+							sh.AssignmentID == asg.ID &&
+							sh.UserID == user.Id);
+					if (_stageHolder != null)
+					{
+						_stageHolder.CurrentStage += 1;
+						_context.Update(_stageHolder);
+					}
+					else
+					{
+						var newSH = new StageHolder
+						{
+							AssignmentID = asg.ID,
+							UserID = user.Id,
+							CurrentStage = Assignment.START_STAGE + 1,
+						};
+						_context.Add(newSH);
+					}
+				}
+				else
+				{
+					group.CurrentStage += 1;
+					_context.Update(group);
+				}
 
 				await _context.AddAsync(sub);
+
+				// Feels wrong to await this. It should be a continuation of some kind that
+				// doesn't need to be performed on this thread. Possibly Save Changes and
+				// start an assignment pass
+				if (astage.IsPeerReviewed)
+				{
+					await ReviewPass(sub, astage.ReviewsPerStudent);
+				}
+
 				await _context.SaveChangesAsync();
 
 				return RedirectToAction(nameof(StudentDetails), new { id = asg.ID });
@@ -530,6 +592,117 @@ namespace PeerReviewWeb.Controllers
 				ViewData["AssignmentID"] = id;
 				ViewData["StageID"] = stage;
 				return View(sub);
+			}
+		}
+
+		// This procedure is a tragedy, but I hope that much of it may be
+		// removed if this controller is restructured
+		private async Task ReviewPass(Submission sub, int mandatoryReviews)
+		{
+			var groupSize = sub.ForGroup?.Members.Count ?? 1;
+			var reviewsPerSub = mandatoryReviews;
+			if (groupSize > 1) reviewsPerSub *= sub.AssignmentStage.Assignment.MinGroupSize;
+			var priors = _context.Submissions
+				.Include(s => s.AssignmentStage)
+				.Include(s => s.ForGroup)
+				.ThenInclude(g => g.Members)
+				.ThenInclude(gjt => gjt.ApplicationUser)
+				.Include(s => s.Submitter)
+				.Where(s =>
+					s.AssignmentStage.Id == sub.AssignmentStage.Id &&
+					s.AssignmentStage.AssignmentId == sub.AssignmentStage.AssignmentId);
+			var reviewAssignments = _context.ReviewAssignments
+				.Include(ra => ra.ApplicationUser)
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.AssignmentStage)
+				.Where(ra =>
+					ra.Submission.AssignmentStage.Id == sub.AssignmentStage.Id &&
+					ra.Submission.AssignmentStage.AssignmentId == sub.AssignmentStage.AssignmentId);
+
+			var underReviewedPriors = priors
+				.Where(s => !(reviewAssignments
+								.Where(ra => ra.Submission.ID == s.ID)
+								.Count() > reviewsPerSub));
+
+			var underReviewingSubmitters = new List<ApplicationUser>();
+
+			// The distinction between group/individual assignments must be destroyed before
+			// it infects all the code.
+			foreach (Submission s in priors)
+			{
+				if (s.ForGroup == null)
+				{
+					if (reviewAssignments
+							.Where(a => a.ApplicationUser.Id == s.Submitter.Id)
+							.Count()
+						< mandatoryReviews)
+					{
+						underReviewingSubmitters.Add(s.Submitter);
+					}
+				}
+				else
+				{
+					var firstUnderReviewer = s.ForGroup.Members
+						.Select(t => t.ApplicationUser)
+						.Where(u => reviewAssignments
+										.Where(ra => ra.ApplicationUser.Id == u.Id)
+										.Count()
+									< mandatoryReviews)
+						.FirstOrDefault();
+
+					if (firstUnderReviewer != null)
+					{
+						underReviewingSubmitters.Add(firstUnderReviewer);
+					}
+				}
+			}
+
+			// Assign new submitters to old submissions
+
+			ApplicationUser[] needsAssignment = new ApplicationUser[groupSize];
+			if (sub.ForGroup == null)
+			{
+				needsAssignment[0] = sub.Submitter;
+			}
+			else
+			{
+				int j = 0;
+				foreach (GroupJoinTag gjt in sub.ForGroup.Members)
+				{
+					await _context.Entry(gjt).Reference(t => t.ApplicationUser).LoadAsync();
+					needsAssignment[j] = gjt.ApplicationUser;
+					j += 1;
+				}
+			}
+
+			int i = 0;
+			foreach (Submission s in underReviewedPriors.Take(groupSize))
+			{
+				ReviewAssignment newRa = new ReviewAssignment
+				{
+					ID = Guid.NewGuid(),
+					Complete = false,
+					ApplicationUser = needsAssignment[i],
+					Submission = s,
+					TimeStamp = DateTime.Now
+				};
+				await _context.AddAsync(newRa);
+				i += 1;
+			}
+
+			// Assign old submitters to new submission
+
+			foreach (ApplicationUser u in underReviewingSubmitters.Take(reviewsPerSub))
+			{
+				ReviewAssignment newRa = new ReviewAssignment
+				{
+					ID = Guid.NewGuid(),
+					Complete = false,
+					ApplicationUser = u,
+					Submission = sub,
+					TimeStamp = DateTime.Now,
+				};
+				await _context.AddAsync(newRa);
 			}
 		}
 	}

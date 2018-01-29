@@ -1,0 +1,40 @@
+@using PeerReviewWeb.Models.CourseModels
+@using PeerReviewWeb.Models.AssignmentViewModels
+@model ExtendedSubmission
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">Stage @Model.Submission.AssignmentStage.Seq</h3>
+	</div>
+	<div class="panel-body">
+		<label>Date &amp; Time</label> @Model.Submission.TimeStamp
+
+		<p><label>Submission Text:</label> @Model.Submission.SubmissionText
+
+		<p><label for="filelist">Files:</label></p>
+		<ul id="filelist" class="list-group">
+		@foreach (FileRef file in Model.Submission.Files) {
+			<li class="list-group-item">
+				<a asp-controller="Files" asp-action="Get" asp-route-id="@file.ID">
+					@file.Name
+				</a>
+			</li>
+		}
+		</ul>
+		<p><label for="reviewlist">Peer Reviews:</label></p>
+		@if (Model.Reviews.Count == 0) {
+			<i>There are not yet any Peer Reviews on this submission.</i>
+		}
+		<ul id="reviewlist" class="list-group">
+		@{int i = 1;}
+		@foreach (Review r in Model.Reviews) {
+			<li class="list-group-item">
+				<a asp-controller="Review" asp-action="View" asp-route-id="@r.ID">
+					Review #@i
+				</a>
+			</li>
+			i++;
+		}
+		</ul>
+	</div>
+</div>

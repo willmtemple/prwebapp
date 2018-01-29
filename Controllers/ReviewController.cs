@@ -55,15 +55,57 @@ namespace PeerReviewWeb.Controllers
 			});
 		}
 
+		public async Task<IActionResult> Assigned(Guid id)
+		{
+			var reviewAssignment = await _context.ReviewAssignments
+				.Include(ra => ra.ApplicationUser)
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.AssignmentStage)
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.Files)
+				.SingleOrDefaultAsync(ra => ra.ID == id);
+
+			var user = await _userManager.GetUserAsync(User);
+
+			if (reviewAssignment == null ||
+				reviewAssignment.ApplicationUser.Id != user.Id)
+			{
+				return NotFound();
+			}
+
+			var schema = JsonConvert.DeserializeObject<Schema>(
+				reviewAssignment.Submission.AssignmentStage.ReviewSchemaJSON
+			);
+
+			ViewData["ForReviewAssignment"] = id;
+			return View(new ReviewViewModel
+			{
+				Submission = reviewAssignment.Submission,
+				ReviewSchema = schema,
+			});
+		}
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Submit(Guid forSubmission)
+		public async Task<IActionResult> Submit(Guid forSubmission, Guid? forReviewAssignment = null)
 		{
 			var submission = await _context.Submissions
 				.Include(s => s.AssignmentStage)
 				.SingleOrDefaultAsync(s => s.ID == forSubmission);
 
 			var user = await _userManager.GetUserAsync(User);
+
+			if (forReviewAssignment != null)
+			{
+				var rasg = await _context.ReviewAssignments
+					.Where(ra => !ra.Complete)
+					.SingleOrDefaultAsync(ra => ra.ID == forReviewAssignment);
+
+				if (rasg == null) return NotFound();
+
+				rasg.Complete = true;
+				_context.Update(rasg);
+			}
 
 			var concreteSchema = JsonConvert.DeserializeObject<Schema>(
 				submission.AssignmentStage.ReviewSchemaJSON
@@ -80,7 +122,48 @@ namespace PeerReviewWeb.Controllers
 
 			_context.Reviews.Add(review);
 			await _context.SaveChangesAsync();
-			return RedirectToAction("Index", "Home");
+			return RedirectToAction(nameof(Success));
+		}
+
+		public IActionResult Success()
+		{
+			return View();
+		}
+
+		public async Task<IActionResult> View(Guid id)
+		{
+			var user = await _userManager.GetUserAsync(User);
+			var review = await _context.Reviews
+				.Include(r => r.Submission)
+				.ThenInclude(s => s.Submitter)
+				.Include(r => r.Submission)
+				.ThenInclude(s => s.ForGroup)
+				.ThenInclude(g => g.Members)
+				.Include(r => r.Submission)
+				.ThenInclude(s => s.AssignmentStage)
+				.Include(r => r.Submission)
+				.ThenInclude(s => s.Files)
+				.Where(r =>
+					((r.Submission.ForGroup != null) &&
+					 r.Submission.ForGroup.Members.Any(t => t.ApplicationUserId == user.Id)) ||
+					(r.Submission.Submitter.Id == user.Id))
+				.SingleOrDefaultAsync(r => r.ID == id);
+
+			var schema = JsonConvert.DeserializeObject<Schema>(
+				review.SubmittedWithSchemaJSON
+			);
+
+			var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+				review.DataJSON
+			);
+
+			return View(new ReviewViewModel
+			{
+				ReviewId = id,
+				ReviewSchema = schema,
+				Values = values,
+				Submission = review.Submission,
+			});
 		}
 
 		private string ReviewDataFromFormData(Schema schema, IFormCollection formData)

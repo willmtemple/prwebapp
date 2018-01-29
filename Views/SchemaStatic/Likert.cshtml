@@ -1,0 +1,27 @@
+@using PeerReviewWeb.Models.FormSchema
+@model LikertForm
+
+@{
+    var checkedItem = ((Dictionary<string,object>)ViewData["Values"])[Model.Id];
+}
+
+<label for="@Model.Id">@Model.Prompt</label>
+<ul class="likert">
+    @for (uint i = 1; i <= @Model.Scale; i++) {
+        <li>
+            @if ((System.Int64)checkedItem == i) {
+                <input type="radio" name="@Model.Id" value="@i" disabled checked />
+            } else {
+                <input type="radio" name="@Model.Id" value="@i" disabled />
+            }
+
+            @if (i == 1) {
+                <label>@Model.MinLabel</label>
+            } else if (i == @Model.Scale) {
+                <label>@Model.MaxLabel</label>
+            } else {
+                <label></label>
+            }
+        </li>
+    }
+</ul>

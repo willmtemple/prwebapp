@@ -1,0 +1,14 @@
+@using PeerReviewWeb.Models.FormSchema
+@using Newtonsoft.Json
+@model Schema
+
+@{
+    ViewData["Title"] = "Form Demo";
+}
+
+<div>
+    <h3>Static Form</h3>
+    <form action="">
+        @await Html.PartialAsync("~/Views/SchemaStatic/Schema.cshtml", Model)
+    </form>
+</div>

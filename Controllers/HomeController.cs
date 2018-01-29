@@ -15,6 +15,7 @@ using PeerReviewWeb.Models.CourseModels;
 using PeerReviewWeb.Models.HomeViewModels;
 using PeerReviewWeb.Models.FormSchema;
 using PeerReviewWeb.Services;
+using Newtonsoft.Json;
 
 namespace PeerReviewWeb.Controllers
 {
@@ -41,26 +42,44 @@ namespace PeerReviewWeb.Controllers
 			_logger = logger;
 			_context = context;
 		}
+
 		public async Task<IActionResult> Index()
 		{
 			var user = await _userManager.GetUserAsync(User);
 
 			_context.Entry(user).Collection(u => u.Courses).Load();
 
-			IList<GroupInvitation> invites = await _context.GroupInvitations
+			var invites = _context.GroupInvitations
 				.Include(gi => gi.Group)
 					.ThenInclude(g => g.Members)
 						.ThenInclude(gjt => gjt.ApplicationUser)
-				.Where(gi => gi.ApplicationUser == user)
-				.ToListAsync();
+				.Where(gi => gi.ApplicationUser == user);
 
-			List<Notification> notifications = invites.Select(gi => new Notification
+			var reviewAssignments = _context.ReviewAssignments
+				.Include(ra => ra.ApplicationUser)
+				.Where(ra => ra.ApplicationUser.Id == user.Id)
+				.Where(ra => !ra.Complete);
+
+			var inviteNotes = invites.Select(gi => new Notification
 			{
 				Message = $"You've been invited to join a group with {gi.Group.GetFormattedMemberList()}.",
 				Controller = "Assignment",
 				Action = "JoinGroup",
 				RouteId = gi.ID.ToString(),
-			}).ToList();
+			});
+
+			var reviewNotes = reviewAssignments.Select(ra => new Notification
+			{
+				Class = "alert alert-warning",
+				Message = "You have a new Peer Review to complete.",
+				Controller = "Review",
+				Action = "Assigned",
+				RouteId = ra.ID.ToString(),
+			});
+
+			List<Notification> notifications = await inviteNotes
+				.Concat(reviewNotes)
+				.ToListAsync();
 
 			List<Course> courses = user.Courses?.Select(cjt =>
 			{
@@ -89,6 +108,26 @@ namespace PeerReviewWeb.Controllers
 				Entries = entries,
 			};
 
+			return View(model);
+		}
+
+		public IActionResult DemoFilledForm()
+		{
+			var entries = new List<AbsFormEntry>();
+			entries.Add(new LikertForm("q1", "The submission is clear.", 5));
+			entries.Add(new TextForm("q1-exp", "Yes, and...", 3));
+			var model = new Schema
+			{
+				Title = "Demo Form",
+				Instructions = "Answer the following questions regarding the material from class.",
+				Entries = entries,
+			};
+
+			var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+				"{\"q1\":5,\"q1-exp\":\"asdfasdf\"}"
+			);
+
+			ViewData["Values"] = values;
 			return View(model);
 		}
 

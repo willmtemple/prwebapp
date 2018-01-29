@@ -1,0 +1,26 @@
+@model PeerReviewWeb.Models.CourseModels.Course
+
+@{
+	ViewData["Title"] = "Join Course";
+}
+
+<h1>Join Course</h1>
+
+@if (ViewData["Error"] != null) {
+    <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> @ViewData["Error"]
+    </div>
+}
+
+<p>You are about to join <b>@Model.Name</b>.</p>
+
+<form asp-action="Join">
+	@if (Model.RequireEnrollmentKey) {
+		<p>This course requires an enrollment key. Please enter the code provided by your instructor.</p>
+		<div class="form-group">
+			<label for="enrollmentKey">Enrollment Key</label>
+			<input type="text" class="form-control" id="enrollmentKey" name="enrollmentKey" />
+		</div>
+	}
+	<button type="submit" class="btn btn-primary">Join</button>
+</form>

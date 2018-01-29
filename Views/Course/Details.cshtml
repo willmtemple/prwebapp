@@ -3,13 +3,15 @@
 @using PeerReviewWeb.Models.JoinTagModels
 
 @{
-    var instructors = String.Join(",", Model.GetInstructors());
-    var students = String.Join(",", Model.GetStudents());
+    var instructors = String.Join(", ", Model.GetInstructors());
+    var students = String.Join(", ", Model.GetStudents());
 }
 
 <h3>@Model.Name</h3>
 
-<label>Owner</label> @Model.OwnerEmail
+<p><label>Referral Link</label> <a asp-action="Join" asp-route-id="@Model.ID">/Course/Join/@Model.ID</a></p>
+
+<p><label>Owner</label> @Model.OwnerEmail</p>
 
 <hr />
 

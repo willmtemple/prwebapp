@@ -6,11 +6,11 @@
 
 <div class="container" style="padding-top: 20px">
     @foreach (Notification n in Model.Notifications) {
-        <div class="alert alert-info">
+        <div class="@n.Class">
             <strong>Info</strong>
             @n.Message
             <a class="alert-link" asp-controller="@n.Controller" asp-action="@n.Action" asp-route-id="@n.RouteId">
-                Click here to view the invitation.
+                Click here to view it.
             </a>
         </div>
     }
@@ -22,7 +22,7 @@
         <div class="alert alert-danger" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
             <span class="sr-only">Error:</span>
-            You are not enrolled in any courses. Please ask an instructor to enrol you.
+            You are not enrolled in any courses. Please ask an instructor to enroll you.
         </div>
     }
 </div>

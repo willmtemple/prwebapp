@@ -103,16 +103,16 @@ namespace PeerReviewWeb.Controllers
 			}
 			// If the user does not have an account, then ask the user to create an account.
 			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-			var organization = email.Split("@")[1];
+			//var organization = email.Split("@")[1];
 
 			// TODO: Configurable organizations
-			if (!_env.IsDevelopment()
+			/*if (!_env.IsDevelopment()
 				&& !organization.Equals(_config["Authorization:OrganizationDomain"]))
 			{
 				await _signInManager.SignOutAsync();
 				ErrorMessage = "User is not a member of organization colorado.edu";
 				return RedirectToAction(nameof(AccessDenied), new { message = ErrorMessage });
-			}
+			}*/
 
 			var user = new ApplicationUser
 			{

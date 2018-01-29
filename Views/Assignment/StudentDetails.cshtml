@@ -21,8 +21,8 @@
 	}
 	@if (Model.Submissions.Count > 0) {
 		<h3>Submission History</h3>
-		@foreach (Submission s in Model.Submissions) {
-			@await Html.PartialAsync("_Submission", s)
+		@foreach (ExtendedSubmission s in Model.Submissions) {
+			@await Html.PartialAsync("_ExtendedSubmission", s)
 		}
 	}
 </div>

@@ -113,6 +113,10 @@ namespace PeerReviewWeb.Controllers
 				}
 
 				course.ID = Guid.NewGuid();
+				if (course.RequireEnrollmentKey)
+				{
+					course.EnrollmentKey = course.EnrollmentKey.HashUTF8ToBase64();
+				}
 				_context.Add(course);
 				await _context.SaveChangesAsync();
 				return RedirectToAction(nameof(Details), new { id = course.ID });
@@ -193,6 +197,11 @@ namespace PeerReviewWeb.Controllers
 						if (u != null) JoinCourse(u, course, CourseJoinTag.ROLE_INSTRUCTOR);
 					}
 
+					if (course.RequireEnrollmentKey && course.EnrollmentKey != null)
+					{
+						course.EnrollmentKey = course.EnrollmentKey.HashUTF8ToBase64();
+					}
+
 					_context.Update(course);
 					await _context.SaveChangesAsync();
 				}
@@ -251,6 +260,43 @@ namespace PeerReviewWeb.Controllers
 			DropUsersWithRole(course, CourseJoinTag.ROLE_INSTRUCTOR);
 			await _context.SaveChangesAsync();
 			return RedirectToAction(nameof(Index));
+		}
+
+		public async Task<IActionResult> Join(Guid id)
+		{
+			var course = await _context.Courses
+				.SingleOrDefaultAsync(c => c.ID == id);
+
+			if (course == null) return NotFound();
+
+			return View(course);
+		}
+
+		[HttpPost, ActionName("Join")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> JoinConfirmed(Guid id, string enrollmentKey)
+		{
+			var user = await _userManager.GetUserAsync(User);
+			var course = await _context.Courses
+				.Include(c => c.Affiliates)
+				.SingleOrDefaultAsync(c => c.ID == id);
+
+			if (course == null) return NotFound();
+
+			if (course.RequireEnrollmentKey)
+			{
+				if (enrollmentKey == null ||
+					enrollmentKey.HashUTF8ToBase64() != course.EnrollmentKey)
+				{
+					ViewData["Error"] = "The enrollment key was incorrect.";
+					return View(course);
+				}
+			}
+
+			JoinCourse(user, course, CourseJoinTag.ROLE_STUDENT);
+			_context.Update(course);
+			await _context.SaveChangesAsync();
+			return RedirectToAction("Index", "Home");
 		}
 
 		private bool CourseExists(Guid id)
