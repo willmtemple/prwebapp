@@ -198,7 +198,7 @@ namespace PeerReviewWeb.Controllers
 			});
 		}
 
-		public async Task<IActionResult> GroupSetup(Guid forAssignment)
+		public async Task<IActionResult> GroupSetup(Guid forAssignment, string error = null)
 		{
 			var asg = await _context.Assignments
 				.Include(a => a.Course)
@@ -214,6 +214,11 @@ namespace PeerReviewWeb.Controllers
 			if (!(asg.Course.RoleFor(user) == CourseJoinTag.ROLE_STUDENT))
 			{
 				return NotFound();
+			}
+
+			if (error != null)
+			{
+				ViewData["Error"] = error;
 			}
 
 			return View(new GroupSetupViewModel
@@ -247,15 +252,19 @@ namespace PeerReviewWeb.Controllers
 
 			if (otherUser == null || asg.Course.RoleFor(otherUser) != CourseJoinTag.ROLE_STUDENT)
 			{
-				return RedirectToAction(nameof(InviteError),
-					new { message = "That user does not exist (have they signed in once?) or is not a member of this course." }
-				);
+				return RedirectToAction(nameof(GroupSetup), new
+				{
+					forAssignment = forAssignment,
+					error = "That user does not exist or is not a member of this course."
+				});
 			}
 			else if (asg.GroupFor(otherUser) != null)
 			{
-				return RedirectToAction(nameof(InviteError),
-					new { message = "That user is already in a group!" }
-				);
+				return RedirectToAction(nameof(GroupSetup), new
+				{
+					forAssignment = forAssignment,
+					error = "That user is already in a group!"
+				});
 			}
 
 			Group g = asg.GroupFor(user);
@@ -283,25 +292,20 @@ namespace PeerReviewWeb.Controllers
 
 				_context.Update(asg);
 			}
-
-			var invite = new GroupInvitation
+			if (user.Id != otherUser.Id)
 			{
-				Group = g,
-				ApplicationUser = otherUser,
-			};
+				var invite = new GroupInvitation
+				{
+					Group = g,
+					ApplicationUser = otherUser,
+				};
 
-			_context.GroupInvitations.Add(invite);
+				_context.GroupInvitations.Add(invite);
+			}
 
 			await _context.SaveChangesAsync();
 
 			return RedirectToAction(nameof(GroupSetup), new { forAssignment = forAssignment });
-		}
-
-		public IActionResult InviteError(string message, string returnurl)
-		{
-			ViewData["returnurl"] = returnurl;
-			ViewData["message"] = message;
-			return View();
 		}
 
 		public async Task<IActionResult> JoinGroup(int ID)

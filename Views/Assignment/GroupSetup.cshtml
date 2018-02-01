@@ -7,6 +7,12 @@
 	ViewData["Title"] = "Group Info";
 }
 
+@if (ViewData["Error"] != null) {
+    <div class="alert alert-danger" role="alert">
+        <strong>Validation Error:</strong> @ViewData["Error"]
+    </div>
+}
+
 <h1>Group Information</h1>
 
 <label>Assignment</label> @Model.Assignment.Name

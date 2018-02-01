@@ -60,6 +60,8 @@ namespace PeerReviewWeb.Controllers
 				.Where(ra => ra.ApplicationUser.Id == user.Id)
 				.Where(ra => !ra.Complete);
 
+			await invites.LoadAsync();
+
 			var inviteNotes = invites.Select(gi => new Notification
 			{
 				Message = $"You've been invited to join a group with {gi.Group.GetFormattedMemberList()}.",
