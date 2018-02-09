@@ -14,6 +14,7 @@ using PeerReviewWeb.Models.ReviewViewModels;
 using PeerReviewWeb.Models.FormSchema;
 using PeerReviewWeb.Models;
 using PeerReviewWeb.Models.CourseModels;
+using PeerReviewWeb.Models.JoinTagModels;
 using Newtonsoft.Json;
 
 namespace PeerReviewWeb.Controllers
@@ -141,12 +142,16 @@ namespace PeerReviewWeb.Controllers
 				.ThenInclude(g => g.Members)
 				.Include(r => r.Submission)
 				.ThenInclude(s => s.AssignmentStage)
+				.ThenInclude(stg => stg.Assignment)
+				.ThenInclude(a => a.Course)
+				.ThenInclude(c => c.Affiliates)
 				.Include(r => r.Submission)
 				.ThenInclude(s => s.Files)
 				.Where(r =>
-					((r.Submission.ForGroup != null) &&
+					(((r.Submission.ForGroup != null) &&
 					 r.Submission.ForGroup.Members.Any(t => t.ApplicationUserId == user.Id)) ||
 					(r.Submission.Submitter.Id == user.Id))
+					|| user.IsAdmin || r.Submission.AssignmentStage.Assignment.Course.RoleFor(user) == CourseJoinTag.ROLE_INSTRUCTOR)
 				.SingleOrDefaultAsync(r => r.ID == id);
 
 			var schema = JsonConvert.DeserializeObject<Schema>(

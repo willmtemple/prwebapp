@@ -389,9 +389,28 @@ namespace PeerReviewWeb.Controllers
 				return NotFound();
 			}
 
+			var subs = _context.Submissions
+				.Include(s => s.AssignmentStage)
+				.ThenInclude(stg => stg.Assignment)
+				.Include(s => s.ForGroup)
+				.ThenInclude(g => g.Members)
+				.ThenInclude(t => t.ApplicationUser)
+				.Include(s => s.Files)
+				.OrderByDescending(s => s.AssignmentStage.Seq)
+				.Where(s => s.AssignmentStage.AssignmentId == asg.ID);
+
+			var esubs = subs.Select(s => new ExtendedSubmission
+			{
+				Submission = s,
+				Reviews = _context.Reviews
+					.Where(r => r.Submission.ID == s.ID)
+					.ToList()
+			});
+
 			var vm = new InstructorDetailsViewModel
 			{
 				Assignment = asg,
+				Submissions = await esubs.ToListAsync(),
 			};
 
 			return View(vm);

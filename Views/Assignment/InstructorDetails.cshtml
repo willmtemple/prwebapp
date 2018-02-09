@@ -26,4 +26,10 @@
     		</a>
     	</li>
 	</ul>
+	@if (Model.Submissions.Count > 0) {
+		<h3>Student Submissions</h3>
+		@foreach (ExtendedSubmission s in Model.Submissions) {
+			@await Html.PartialAsync("_ExtendedSubmission", s)
+		}
+	}
 </div>

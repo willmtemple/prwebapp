@@ -8,8 +8,11 @@
 	</div>
 	<div class="panel-body">
 		<label>Date &amp; Time</label> @Model.Submission.TimeStamp
+		@if (Model.Submission.ForGroup != null) {
+			<p><label>Group</label>: @Model.Submission.ForGroup.GetFormattedMemberList()</p>
+		}
 
-		<p><label>Submission Text:</label> @Model.Submission.SubmissionText
+		<label>Submission Text:</label> <p>@Model.Submission.SubmissionText</p>
 
 		<p><label for="filelist">Files:</label></p>
 		<ul id="filelist" class="list-group">
