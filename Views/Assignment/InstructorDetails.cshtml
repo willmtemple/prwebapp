@@ -26,6 +26,23 @@
     		</a>
     	</li>
 	</ul>
+	@if (Model.IncompleteReviews.Count > 0) {
+		<h3>Incomplete Peer Reviews</h3>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Email</th>
+					<th>Date Assigned</th>
+					<th>GUID</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (ReviewAssignment ra in Model.IncompleteReviews) {
+					@await Html.PartialAsync("_ReviewAssignment", ra)
+				}
+			</tbody>
+		</table>
+	} 
 	@if (Model.Submissions.Count > 0) {
 		<h3>Student Submissions</h3>
 		@foreach (ExtendedSubmission s in Model.Submissions) {
