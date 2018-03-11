@@ -11,6 +11,10 @@
     margin-top: 15px;
 }
 
+div .mdfmt {
+    background-color: #f0f0f0;
+}
+
 /*Credit: Pete Fecteau https://codepen.io/Buttonpresser/pen/qiuIx?js-preprocessor=none */
 .wrap {
     font:12px Arial, san-serif;

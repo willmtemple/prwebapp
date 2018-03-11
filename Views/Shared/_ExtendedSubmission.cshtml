@@ -10,9 +10,12 @@
 		<label>Date &amp; Time</label> @Model.Submission.TimeStamp
 		@if (Model.Submission.ForGroup != null) {
 			<p><label>Group</label>: @Model.Submission.ForGroup.GetFormattedMemberList()</p>
+		} else {
+			<p><label>Submitter</label>: @Model.Submission.Submitter.Email</p>
 		}
 
-		<label>Submission Text:</label> <p>@Model.Submission.SubmissionText</p>
+		<p><label>Submission Text:</label></p>
+		<div class="mdfmt">@Model.Submission.SubmissionText</div>
 
 		<p><label for="filelist">Files:</label></p>
 		<ul id="filelist" class="list-group">

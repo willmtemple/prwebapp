@@ -134,7 +134,7 @@ namespace PeerReviewWeb.Controllers
 		public async Task<IActionResult> View(Guid id)
 		{
 			var user = await _userManager.GetUserAsync(User);
-			var review = await _context.Reviews
+			var reviewInter = await _context.Reviews
 				.Include(r => r.Submission)
 				.ThenInclude(s => s.Submitter)
 				.Include(r => r.Submission)
@@ -147,12 +147,13 @@ namespace PeerReviewWeb.Controllers
 				.ThenInclude(c => c.Affiliates)
 				.Include(r => r.Submission)
 				.ThenInclude(s => s.Files)
-				.Where(r =>
+				.ToListAsync();
+			var review = reviewInter.Where(r =>
 					(((r.Submission.ForGroup != null) &&
 					 r.Submission.ForGroup.Members.Any(t => t.ApplicationUserId == user.Id)) ||
 					(r.Submission.Submitter.Id == user.Id))
 					|| user.IsAdmin || r.Submission.AssignmentStage.Assignment.Course.RoleFor(user) == CourseJoinTag.ROLE_INSTRUCTOR)
-				.SingleOrDefaultAsync(r => r.ID == id);
+				.SingleOrDefault(r => r.ID == id);
 
 			var schema = JsonConvert.DeserializeObject<Schema>(
 				review.SubmittedWithSchemaJSON

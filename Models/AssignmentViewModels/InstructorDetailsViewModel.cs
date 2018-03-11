@@ -7,5 +7,6 @@ namespace PeerReviewWeb.Models.AssignmentViewModels
 	{
 		public Assignment Assignment { get; set; }
 		public ICollection<ExtendedSubmission> Submissions { get; set; }
+		public ICollection<ReviewAssignment> IncompleteReviews { get; set; }
 	}
 }

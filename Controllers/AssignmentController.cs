@@ -397,8 +397,16 @@ namespace PeerReviewWeb.Controllers
 				.ThenInclude(g => g.Members)
 				.ThenInclude(t => t.ApplicationUser)
 				.Include(s => s.Files)
+				.Include(s => s.Submitter)
 				.OrderByDescending(s => s.AssignmentStage.Seq)
 				.Where(s => s.AssignmentStage.AssignmentId == asg.ID);
+
+			var incompleteReviews = _context.ReviewAssignments
+				.Include(ra => ra.ApplicationUser)
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.AssignmentStage)
+				.OrderByDescending(ra => ra.TimeStamp)
+				.Where(ra => !ra.Complete && ra.Submission.AssignmentStage.AssignmentId == asg.ID);
 
 			var esubs = subs.Select(s => new ExtendedSubmission
 			{
@@ -412,6 +420,7 @@ namespace PeerReviewWeb.Controllers
 			{
 				Assignment = asg,
 				Submissions = await esubs.ToListAsync(),
+				IncompleteReviews = await incompleteReviews.ToListAsync()
 			};
 
 			return View(vm);
