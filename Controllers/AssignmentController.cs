@@ -205,6 +205,7 @@ namespace PeerReviewWeb.Controllers
 				.ThenInclude(c => c.Affiliates)
 				.Include(a => a.Groups)
 				.ThenInclude(g => g.Members)
+				.ThenInclude(gjt => gjt.ApplicationUser)
 				.SingleOrDefaultAsync(a => a.ID == forAssignment);
 
 			if (asg == null) return NotFound();
