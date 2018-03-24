@@ -3,10 +3,11 @@
     ViewData["Title"] = "Profile";
 }
 
-<h4>@ViewData["Title"]</h4>
+<h1>@ViewData["Title"]</h1>
 @Html.Partial("_StatusMessage", Model.StatusMessage)
-<div class="container">
-    <label>Email:</label> @Model.Email
+<div class="ui divided section list">
+    <label class="ui horizontal label">Email</label>
+    @Model.Email
 </div>
 
 @section Scripts {

@@ -1,0 +1,24 @@
+{
+  "name": "pr-web-app",
+  "version": "1.0.0",
+  "description": "_Name Subject To Change_",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willmtemple/prwebapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/willmtemple/prwebapp/issues"
+  },
+  "homepage": "https://github.com/willmtemple/prwebapp#readme",
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "semantic-ui": "^2.3.1"
+  }
+}
