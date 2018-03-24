@@ -1,0 +1,22 @@
+@using PeerReviewWeb.Models.FormSchema
+@using Newtonsoft.Json
+@model Schema
+
+@{
+    ViewData["Title"] = "Form Demo";
+    var jsobj = JsonConvert.SerializeObject(Model, Formatting.Indented);
+}
+
+<div class="ui stackable two column grid">
+    <div class="eight wide column">
+        <h1>JSON</h1>
+
+        <textarea class="mono">@jsobj</textarea>
+    </div>
+    <div class="eight wide column">
+        <h1>Form</h1>
+        <form class= "ui form" action="">
+            @await Html.PartialAsync("~/Views/Schema/Schema.cshtml", Model)
+        </form>
+    </div>
+</div>
