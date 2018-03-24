@@ -21,7 +21,7 @@ ul.likert {
     display: flex;
     justify-content : space-between;
     margin: 0;
-    padding: 0 65px;
+    padding: 0 60px;
 }
   
 div.likert.labelbox {
@@ -33,16 +33,26 @@ div.likert.labelbox {
   
 p.likert.label {
     text-align: center;
+    max-width: 90px;
 }
   
 div.ui.form div.likert.line {
     content: '';
     position:relative;
     top: 10px;
-    left: 65px;
+    left: 60px;
     height: 4px;
-    width: calc(100% - 130px - 11px);
+    width: calc(100% - 120px - 11px);
     padding: 0 2.5%;
     background-color: #bfbfbf;
     z-index: -1;
+}
+
+/* Fix a bug in ACE editor */
+.ace_editor {
+    font-family: 'Source Code Pro', Consolas, monospace !important;
+}
+
+.ace_editor div {
+    font: inherit !important;
 }

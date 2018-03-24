@@ -12,6 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @AppTitle</title>
 
+    @{/* We'll use source code pro frequently enough to justify loading it into every page? */}
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet">
     <environment include="Development">
         <link rel="stylesheet" href="~/lib/semantic/dist/semantic.css" />
         <link rel="stylesheet" href="~/css/site.css" />
@@ -54,6 +56,7 @@
         <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/semantic/dist/semantic.js"></script>
         <script src="~/lib/showdown/dist/showdown.js"></script>
+        <script src="~/lib/ace/dist/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
@@ -70,8 +73,10 @@
                 integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa">
         </script>
         <script src="~/lib/showdown/dist/showdown.js.min"></script>
+        <script src="~/lib/ace/dist/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="~/js/site.min.js" asp-append-version="true"></script>
     </environment>
+    @{/* No good way to load this from a CDN as far as I know.*/}
 
     @RenderSection("Scripts", required: false)
 </body>
