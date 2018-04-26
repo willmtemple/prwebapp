@@ -628,6 +628,124 @@ namespace PeerReviewWeb.Controllers
 			}
 		}
 
+		public async Task<IActionResult> FixReviews(Guid ID, string sid, string message = null)
+		{
+			if (message != null) ViewData["Error"] = message;
+			
+			var user = await _userManager.GetUserAsync(User);
+
+			if (user == null) return Forbid();
+
+			var asg = await _context.Assignments
+				.Include(a => a.Course)
+				.ThenInclude(c => c.Affiliates)
+				.Include(a => a.Stages)
+				.SingleOrDefaultAsync(a => a.ID == ID);
+
+			if (! (user.IsAdmin
+					|| asg.Course.RoleFor(user) == CourseJoinTag.ROLE_INSTRUCTOR
+					|| asg.Course.OwnerEmail == user.Email)
+				)
+			{
+				return NotFound();
+			}
+
+			var stage = asg.Stages.SingleOrDefault(s => s.Id == sid);
+
+			ViewData["Stage"] = asg.Name + " (stage: " + stage.Id + ")";
+
+			var submissions = _context.Submissions
+				.Include(s => s.ForGroup)
+				.ThenInclude(g => g.Members)
+				.ThenInclude(gjt => gjt.ApplicationUser)
+				.Where(s => s.AssignmentStage.Id == stage.Id && s.AssignmentStage.AssignmentId == asg.ID);
+
+			var users = _userManager.Users
+				.Where(u => asg.Course.RoleFor(u) == CourseJoinTag.ROLE_STUDENT);
+
+			var studentreviews = new List<(ApplicationUser, int)>();
+			var subreviews = new List<(Submission, int)>();
+
+			foreach (ApplicationUser u in users)
+			{
+				var reviews = _context.ReviewAssignments
+					.Include(ra => ra.ApplicationUser)
+					.Where(ra => ra.ApplicationUser.Id == u.Id && 
+						ra.Submission.AssignmentStage.AssignmentId == asg.ID &&
+						ra.Submission.AssignmentStage.Id == stage.Id)
+					.CountAsync();
+				studentreviews.Add((u, await reviews));
+			}
+
+			foreach (Submission s in submissions)
+			{
+				var reviews = _context.ReviewAssignments
+					.Include(ra => ra.Submission)
+					.Where(ra => ra.Submission.ID == s.ID)
+					.CountAsync();
+				subreviews.Add((s, await reviews));
+			}
+
+			return View(new FixReviewsViewModel {
+				ReviewsPerStudent = studentreviews,
+				ReviewsPerSubmission = subreviews
+			});
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> AssignReview(string userId, Guid submissionId)
+		{
+			var user = await _userManager.GetUserAsync(User);
+
+			var submission = await _context.Submissions
+				.Include(s => s.AssignmentStage)
+				.ThenInclude(stg => stg.Assignment)
+				.ThenInclude(a => a.Course)
+				.ThenInclude(c => c.Affiliates)
+				.SingleOrDefaultAsync(s => s.ID == submissionId);
+
+			var asgUser = await _userManager.FindByIdAsync(userId);
+
+			if (asgUser == null || submission == null) {
+				return NotFound();
+			}
+
+			var course = submission.AssignmentStage.Assignment.Course;
+
+			if (! (user.IsAdmin
+				|| course.OwnerEmail == user.Email
+				|| course.RoleFor(user) == CourseJoinTag.ROLE_INSTRUCTOR))
+			{
+				return NotFound();
+			}
+
+			if (await _context.ReviewAssignments.AnyAsync(ra =>
+				ra.Submission.ID == submissionId &&
+				ra.ApplicationUser.Id == userId))
+			{
+				return RedirectToAction(nameof(FixReviews), new {
+					ID = submission.AssignmentStage.Assignment.ID,
+					sid = submission.AssignmentStage.Id,
+					message =  "An assignment from that user to that submission already exists."
+				});
+			}
+
+			_context.Add(new ReviewAssignment{
+				ID = Guid.NewGuid(),
+				Submission = submission,
+				ApplicationUser = asgUser,
+				TimeStamp = DateTime.Now,
+				Complete = false
+			});
+
+			await _context.SaveChangesAsync();
+
+			return RedirectToAction(nameof(FixReviews), new {
+				ID = submission.AssignmentStage.Assignment.ID,
+				sid = submission.AssignmentStage.Id
+			});
+		}
+
 		// This procedure is a tragedy, but I hope that much of it may be
 		// removed if this controller is restructured
 		private async Task ReviewPass(Submission sub, int mandatoryReviews)

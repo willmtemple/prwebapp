@@ -118,7 +118,8 @@ namespace PeerReviewWeb.Controllers
 				Owner = user,
 				SubmittedWithSchemaJSON = submission.AssignmentStage.ReviewSchemaJSON,
 				Submission = submission,
-				DataJSON = ReviewDataFromFormData(concreteSchema, Request.Form)
+				DataJSON = ReviewDataFromFormData(concreteSchema, Request.Form),
+				TimeStamp = DateTime.Now
 			};
 
 			_context.Reviews.Add(review);

@@ -1,0 +1,78 @@
+@using PeerReviewWeb.Models.AssignmentViewModels
+@model FixReviewsViewModel
+
+@{
+    ViewData["Title"] = "FixReviews";
+}
+
+@if (ViewData["Error"] != null) {
+    <div class="alert alert-danger" role="alert">
+        <strong>Validation Error:</strong> @ViewData["Error"]
+    </div>
+}
+
+<h3>Peer Reviews for @ViewData["Stage"]</h3>
+
+<p>This page shows you the mapping from reviewers to reviews. It should provide enough information to fix review mappings if necessary.</p>
+
+<p><b>This page is for debugging purposes only. If you are here, and are not sure why, retreat from whence you came.</b></p>
+
+<h4>Reviews Per Student</h4>
+
+<table class="table">
+<thead>
+    <tr>
+        <th>Email</th>
+        <th>ID</th>
+        <th>Number of Assigned Reviews</th>
+    </tr>
+</thead>
+<tbody>
+@foreach ((ApplicationUser, int) t in Model.ReviewsPerStudent)
+{
+    <tr>
+        <td>@t.Item1.Email</td>
+        <td>@t.Item1.Id</td>
+        <td>@t.Item2</td>
+    </tr>
+}
+</tbody>
+</table>
+
+<h4>Reviews Per Submission</h4>
+
+<table class="table">
+<thead>
+    <tr>
+        <th>Submitter(s)</th>
+        <th>ID</th>
+        <th>Number of Assigned Reviewers</th>
+    </tr>
+</thead>
+<tbody>
+@foreach ((Submission, int) t in Model.ReviewsPerSubmission)
+{
+    <tr>
+        <td>@t.Item1.GetSubmitter()</td>
+        <td>@t.Item1.ID</td>
+        <td>@t.Item2</td>
+    </tr>
+}
+</tbody>
+</table>
+
+<h4>Manually Assign a Review</h4>
+
+<b>Warning. This form will gladly allow you to break the course.</b>
+
+<form asp-action="AssignReview">
+    <div class="form-group">
+        <label for="submissionId">Submission ID</label>
+        <input type="text" id="submissionId" name="submissionId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="userId">User ID</label>
+        <input type="text" id="userId" name="userId" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-danger">Create Review</button>
+</form>

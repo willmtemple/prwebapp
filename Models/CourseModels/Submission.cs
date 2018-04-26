@@ -16,5 +16,10 @@ namespace PeerReviewWeb.Models.CourseModels
 		public ICollection<FileRef> Files { get; set; }
 		public bool Confirmed { get; set; } = false;
 		public DateTime TimeStamp { get; set; }
+
+		public string GetSubmitter() {
+			if (ForGroup == null) return Submitter.Email;
+			else return ForGroup.GetFormattedMemberList();
+		}
 	}
 }
