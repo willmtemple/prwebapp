@@ -173,6 +173,54 @@ namespace PeerReviewWeb.Controllers
 			});
 		}
 
+		public async Task<IActionResult> ForAssignmentJSON(Guid forAssignment)
+		{
+			var user = await _userManager.GetUserAsync(User);
+			var assignment = _context.Assignments
+				.Where(asg => asg.ID == forAssignment)
+				.SingleOrDefaultAsync();
+			var course = await _context.Courses
+				.Include(c => c.Assignments)
+				.Include(c => c.Affiliates)
+				.ThenInclude(cjt => cjt.ApplicationUser)
+				.ThenInclude(u => u.Groups)
+				.ThenInclude(gjt => gjt.Group)
+				.ThenInclude(g => g.Assignment)
+				.Where(c => c.Assignments.Any(asg => asg.ID == forAssignment))
+				.SingleOrDefaultAsync();
+			var reviewAssignments = await _context.ReviewAssignments
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.AssignmentStage)
+				.ThenInclude(ags => ags.Assignment)
+				.Include(ra => ra.Submission)
+				.ThenInclude(s => s.Submitter)
+				.Include(ra => ra.ApplicationUser)
+				.Where(ra => ra.Submission.AssignmentStage.AssignmentId == forAssignment)
+				.ToListAsync();
+
+			if (assignment == null || course == null ||
+				!(user.IsAdmin || course.OwnerEmail == user.Email || course.RoleFor(user) == CourseJoinTag.ROLE_INSTRUCTOR))
+			{
+				return StatusCode(404, new { status = 404, error = "Not Found"});
+			}
+
+
+			return new OkObjectResult(new {
+				status = 200,
+				Users = course.Affiliates
+					.Where(cjt => cjt.Role == CourseJoinTag.ROLE_STUDENT)
+					.Select(cjt => new {
+						User = cjt.ApplicationUser.Id,
+						Email = cjt.ApplicationUser.Email,
+						Group = cjt.ApplicationUser.Groups.Where(gjt => gjt.Group.Assignment.ID == forAssignment).SingleOrDefault()?.GroupId
+					}).ToList(),
+				Reviews = reviewAssignments.Select(ra => new {
+					Assignee = ra.ApplicationUser.Id,
+					AssignedTo = ra.Submission.Submitter.Id,
+				})
+			});
+		}
+
 		private string ReviewDataFromFormData(Schema schema, IFormCollection formData)
 		{
 			// My favorite class

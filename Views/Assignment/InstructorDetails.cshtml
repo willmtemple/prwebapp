@@ -26,6 +26,7 @@
     		</a>
     	</li>
 	</ul>
+	<div class="reviewgraph-container"></div>
 	@if (Model.IncompleteReviews.Count > 0) {
 		<h3>Incomplete Peer Reviews</h3>
 		<table class="table">
@@ -50,3 +51,16 @@
 		}
 	}
 </div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" integrity="sha256-hYXbQJK4qdJiAeDVjjQ9G0D6A0xLnDQ4eJI9dkm7Fpk=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+const _DURL = "/Assignment/ReviewJson";
+
+var svg = d3.select('div.reviewgraph-container')
+	.append('svg')
+	.append('g');
+
+console.log('done');
+</script>
+}
