@@ -217,6 +217,7 @@ namespace PeerReviewWeb.Controllers
 				Reviews = reviewAssignments.Select(ra => new {
 					Assignee = ra.ApplicationUser.Id,
 					AssignedTo = ra.Submission.Submitter.Id,
+					Stage = ra.Submission.AssignmentStage.Seq,
 				})
 			});
 		}

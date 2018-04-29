@@ -26,7 +26,7 @@
     		</a>
     	</li>
 	</ul>
-	<div class="reviewgraph-container"></div>
+	<div class="reviewgraph-container" data-id="@Model.Assignment.ID"></div>
 	@if (Model.IncompleteReviews.Count > 0) {
 		<h3>Incomplete Peer Reviews</h3>
 		<table class="table">
@@ -53,14 +53,92 @@
 </div>
 
 @section Scripts {
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" integrity="sha256-hYXbQJK4qdJiAeDVjjQ9G0D6A0xLnDQ4eJI9dkm7Fpk=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="http://d3js.org/d3.v4.min.js"></script>
 <script type="text/javascript">
-const _DURL = "/Assignment/ReviewJson";
+const _DURL = "/Review/ForAssignmentJSON?forAssignment=" + $('div.reviewgraph-container').attr('data-id');
+
+const _blockWidth = 100;
+const _blockRadius = 5;
+
+function blockHeight(d) {
+	return d.users.length * 24 + 36;
+}
+
+const dims = {
+	width  : "100%",
+	height : "500"
+};
+
+function rotate(r, a) {
+	let rads = a * Math.PI / 180;
+	let ptx = r;
+	let pty = 0;
+
+	return {
+		x : Math.round(Math.cos(rads) * ptx - Math.sin(rads) * pty),
+		y : Math.round(Math.sin(rads) * ptx - Math.cos(rads) * pty)
+	};
+}
 
 var svg = d3.select('div.reviewgraph-container')
 	.append('svg')
-	.append('g');
+	.attr('id', 'reviewgraph')
+	.attr('width', dims.width)
+	.attr('height', dims.height + 'px')
+	.append('g')
 
-console.log('done');
+var w = $('svg#reviewgraph').width();
+
+svg.attr('transform', 'translate(' + w/2 + ',' + dims.height/2 + ')');
+
+d3.json(_DURL, function (error, data) {
+	if (error) throw error;
+
+	var inverted = {};
+	var count = 0;
+	for (var i = 0; i < data.users.length; i++) {
+		let k = data.users[i].group
+		if (k === null) k = data.users[i].user;
+		if (inverted[k] === undefined) {
+			count += 1;
+			inverted[k] = [data.users[i]];
+		} else {
+			inverted[k].push(data.users[i]);
+		}
+	}
+
+	let rotation_angle = 360.0/count;
+
+	var i = 0;
+	const R = 200;
+	var transformed = [];
+	for (var g in inverted) {
+		if (!inverted.hasOwnProperty(g)) continue;
+
+		transformed.push({
+			seq : i,
+			coords : rotate(R, rotation_angle * i),
+			group : g,
+			users : inverted[g],
+		});
+
+		i += 1;
+	}
+
+	svg.selectAll('rect')
+		.data(transformed)
+		.enter()
+		.append('rect')
+		.attr('x', function(d) { return d.coords.x - (_blockWidth/2); })
+		.attr('y', function(d) { return d.coords.y - (blockHeight(d) / 2) ; })
+		.attr('width', _blockWidth)
+		.attr('height', blockHeight)
+		.attr('rx', _blockRadius)
+		.attr('ry', _blockRadius)
+		.style('fill', function(d) { return d3.schemeCategory10[d.seq]; })
+		.style('opacity', 0.2)
+		.style('stroke', 'black')
+		.style('stroke-width', '1px');
+});
 </script>
 }
